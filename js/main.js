@@ -1,0 +1,46 @@
+alert("Bienvenido al organizador de gastos");
+
+let arrayGastos = [];
+
+const listaDeGastos = ["alimentos", "transporte", "entretenimiento", "salud", "otros"]
+
+function registrarGastos() {
+
+    let gastoRegistrado = prompt("A continuación, seleccione el gasto que desea registrar: " + listaDeGastos.join(", "));
+
+    if (!listaDeGastos.includes(gastoRegistrado)) {// si el nombre del gasto no esta incluido dentro de la lista, arroja el alert y cortamos la funcion con return
+        alert("Gasto invalido, intente nuevamente");
+        return registrarGastos();
+    }
+
+    let importe = parseFloat(prompt("Ingrese el monto:"));
+
+    if (isNaN(importe) || importe <= 0) { //si el importe ingresado no es un numero o es menor o igual a cero, arroja el alert y cortamos la funcion con return
+        alert("Monto invalido, ingrese un numero mayor a 0");
+        return registrarGastos();
+    }
+
+    arrayGastos.push({ Categoria: gastoRegistrado, Importe: importe });
+
+
+    let continuar = prompt("¿Desea ingresar otro gasto? (si/no)").toLowerCase();
+
+    if (continuar === "si") {
+        registrarGastos();
+    }
+
+    else {
+        const total = arrayGastos.reduce((acum, gasto) => acum + gasto.Importe, 0); 
+
+        console.log("Usted ha registrado los siguientes datos", arrayGastos);
+        alert("El total de sus gastos es: $" + total);   
+    }
+}
+
+registrarGastos();
+
+
+
+
+
+

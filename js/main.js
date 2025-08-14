@@ -7,6 +7,7 @@ const listaDeGastos = ["alimentos", "transporte", "entretenimiento", "salud", "o
 function registrarGastos() {
 
     let gastoRegistrado = prompt("A continuación, seleccione el gasto que desea registrar: " + listaDeGastos.join(", "));
+    gastoRegistrado=gastoRegistrado.toLowerCase();
 
     if (!listaDeGastos.includes(gastoRegistrado)) {// si el nombre del gasto no esta incluido dentro de la lista, arroja el alert y cortamos la funcion con return
         alert("Gasto invalido, intente nuevamente");

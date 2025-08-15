@@ -7,7 +7,7 @@ const listaDeGastos = ["alimentos", "transporte", "entretenimiento", "deudas", "
 function registrarGastos() {
 
     let gastoRegistrado = prompt("A continuación, seleccione el gasto que desea registrar: " + listaDeGastos.join(", "));
-    gastoRegistrado=gastoRegistrado.toLowerCase();
+    gastoRegistrado = gastoRegistrado.toLowerCase();
 
     if (!listaDeGastos.includes(gastoRegistrado)) {// si el nombre del gasto no esta incluido dentro de la lista, arroja el alert y cortamos la funcion con return
         alert("Gasto invalido, intente nuevamente");
@@ -30,12 +30,30 @@ function registrarGastos() {
         registrarGastos();
     }
 
-    else {
-        const total = arrayGastos.reduce((acum, gasto) => acum + gasto.Importe, 0); 
+    else if (continuar !== "si") {
 
-        console.log("Usted ha registrado los siguientes datos", arrayGastos);
-        alert("El total de sus gastos es: $" + total);   
+        // Calcular totales por categoría
+        let totalesPorCategoria = {};
+        arrayGastos.forEach(gasto => {
+            if (!totalesPorCategoria[gasto.Categoria]) {
+                totalesPorCategoria[gasto.Categoria] = 0;
+            }
+            totalesPorCategoria[gasto.Categoria] += gasto.Importe;
+        });
+
+        // Calcular total general
+        const totalGeneral = arrayGastos.reduce((acum, gasto) => acum + gasto.Importe, 0);
+
+        // Crear mensaje final
+        let mensaje = "Usted ha registrado:\n\n";
+        for (let categoria in totalesPorCategoria) {
+            mensaje += `${categoria}: $${totalesPorCategoria[categoria].toFixed(2)}\n`;
+        }
+        mensaje += `\nTotal general: $${totalGeneral.toFixed(2)}`;
+
+        alert(mensaje);
     }
+
 }
 
 registrarGastos();

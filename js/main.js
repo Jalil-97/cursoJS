@@ -2,7 +2,7 @@ alert("Bienvenido al organizador de gastos");
 
 let arrayGastos = [];
 
-const listaDeGastos = ["alimentos", "transporte", "entretenimiento", "salud", "otros"]
+const listaDeGastos = ["alimentos", "transporte", "entretenimiento", "deudas", "salud", "otros"]
 
 function registrarGastos() {
 

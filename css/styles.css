@@ -1,6 +1,231 @@
-h1, p {
-    font-family: 'Times New Roman', Times, serif;
-    color: black;
-    text-align: center;
+/* ========== RESET ========== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f7f6;
+    color: #333;
+    line-height: 1.6;
+}
+
+h2 {
+    text-align: center;
+}
+
+/* ========== NAVBAR ========== */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #013704;
+    color: #fff;
+    padding: 1rem 2rem;
+}
+
+.navbar .logo {
+    font-size: 1.5rem;
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: 1rem;
+}
+
+.nav-links a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.nav-links a:hover {
+    text-decoration: underline;
+}
+
+/* ========== HERO (Inicio) ========== */
+.hero {
+    text-align: center;
+    padding: 3rem 1rem;
+    background: #e8f5e9;
+}
+
+.hero h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.hero p {
+    margin-bottom: 1.5rem;
+}
+
+.btn {
+    display: inline-block;
+    background: #013704;
+    color: #fff;
+    padding: 0.7rem 1.2rem;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.btn:hover {
+    background: #013704;
+}
+
+/* ========== CARDS (Finanzas) ========== */
+.cards {
+    display: flex;
+    justify-content: space-around;
+    gap: 1rem;
+    padding: 2rem;
+    flex-wrap: wrap;
+}
+
+.card {
+    flex: 1 1 200px;
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.card h3 {
+    margin-bottom: 0.5rem;
+    color: #013704;
+}
+
+/* ========== TABLA ========== */
+.tabla {
+    padding: 2rem;
+}
+
+.tabla table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.tabla th,
+.tabla td {
+    padding: 0.8rem;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+}
+
+.tabla th {
+    background: #013704;
+    color: #fff;
+}
+
+.tabla tr:hover {
+    background: #f1f8f2;
+}
+
+/* ========== FOOTER ========== */
+footer {
+    text-align: center;
+    padding: 1rem;
+    background: #013704;
+    color: #fff;
+    margin-top: 2rem;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+    .navbar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .nav-links {
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .cards {
+        flex-direction: column;
+    }
+}
+
+/* Estilos para los montos */
+.ingreso {
+    color: green;
+    font-weight: bold;
+}
+
+.gasto {
+    color: red;
+    font-weight: bold;
+}
+
+/* Formulario */
+/* Formulario */
+.form-movimiento {
+  max-width: 500px;      /* límite de ancho */
+  margin: 2rem auto;     /* auto centra horizontalmente */
+  padding: 2rem;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0px 2px 5px rgba(0,0,0,0.1);
+  text-align: center;    /* centra el título y los elementos inline */
+}
+
+.form-movimiento form {
+  display: flex;
+  flex-direction: column; /* apila los inputs */
+  gap: 0.8rem;
+  align-items: center;    /* centra los inputs horizontalmente */
+}
+
+.form-movimiento input,
+.form-movimiento button {
+  width: 100%;           /* que ocupen todo el ancho del form */
+  max-width: 400px;      /* pero con un límite */
+  padding: 0.7rem;
+  font-size: 1rem;
+}
+
+.form-movimiento button {
+  background: #013704;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.form-movimiento button:hover {
+  background: #013704;
+}
+
+/* Montos diferenciados */
+.ingreso {
+  color: green;
+  font-weight: bold;
+}
+
+.gasto {
+  color: red;
+  font-weight: bold;
+}
+
+/* Botón eliminar */
+.eliminar {
+  background: #c62828;
+  color: #fff;
+  border: none;
+  padding: 0.3rem 0.6rem;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.eliminar:hover {
+  background: #b71c1c;
 }

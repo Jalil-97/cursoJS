@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Finanzas App - Finanzas</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="../js/main.js" defer></script>
+
+</head>
+
+<body>
+    <!-- Navbar -->
+    <header class="navbar">
+        <h1 class="logo">Mi Finanzas App</h1>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="../index.html">Inicio</a></li>
+                <li><a href="./finanzas.html">Finanzas</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Tarjetas de resumen -->
+    <section class="cards">
+        <div class="card">
+            <h3>Saldo actual</h3>
+            <p id="saldo">$0</p>
+        </div>
+        <div class="card">
+            <h3>Ingresos</h3>
+            <p id="ingresos">$0</p>
+        </div>
+        <div class="card">
+            <h3>Gastos</h3>
+            <p id="gastos">$0</p>
+        </div>
+    </section>
+
+    <section class="form-movimiento">
+        <h2>Agregar Movimiento</h2>
+        <form id="form-movimiento">
+            <input type="date" id="fecha" required>
+            <input type="text" id="categoria" placeholder="Categoría" required>
+            <input type="number" id="monto" placeholder="Monto (+ ingreso, - gasto)" required>
+            <button type="submit">Agregar</button>
+        </form>
+    </section>
+
+    <!-- Tabla de movimientos -->
+    <section class="tabla">
+        <h2>Movimientos</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Categoría</th>
+                    <th>Monto</th>
+                </tr>
+            </thead>
+            <tbody id="lista-movimientos">
+                <!-- Tus movimientos en JS van a ir acá -->
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>© 2025 Mi Finanzas App</p>
+    </footer>
+</body>
+
+</html>

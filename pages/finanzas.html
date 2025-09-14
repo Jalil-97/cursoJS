@@ -2,73 +2,158 @@
 <html lang="es">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Finanzas App - Finanzas</title>
-    <link rel="stylesheet" href="../css/styles.css">
-    <script src="../js/main.js" defer></script>
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mi Finanzas App - Finanzas</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+  <script src="../js/main.js" defer></script>
 </head>
 
 <body>
-    <!-- Navbar -->
-    <header class="navbar">
-        <h1 class="logo">Mi Finanzas App</h1>
-        <nav>
-            <ul class="nav-links">
-                <li><a href="../index.html">Inicio</a></li>
-                <li><a href="./finanzas.html">Finanzas</a></li>
-            </ul>
-        </nav>
-    </header>
+  <!-- Navbar -->
+  <header class="navbar">
+    <h1 class="logo">Mi Finanzas App</h1>
+    <nav>
+      <ul class="nav-links">
+        <li><a href="../index.html">Inicio</a></li>
+        <li><a href="./finanzas.html">Finanzas</a></li>
+      </ul>
+    </nav>
+  </header>
 
-    <!-- Tarjetas de resumen -->
-    <section class="cards">
-        <div class="card">
-            <h3>Saldo actual</h3>
-            <p id="saldo">$0</p>
-        </div>
-        <div class="card">
-            <h3>Ingresos</h3>
-            <p id="ingresos">$0</p>
-        </div>
-        <div class="card">
-            <h3>Gastos</h3>
-            <p id="gastos">$0</p>
-        </div>
-    </section>
+  <!-- Tarjetas de resumen -->
+  <section class="cards">
+    <div class="card">
+      <h3>Saldo actual</h3>
+      <p id="saldo">$0</p>
+    </div>
+    <div class="card">
+      <h3>Ingresos</h3>
+      <p id="ingresos">$0</p>
+    </div>
+    <div class="card">
+      <h3>Gastos</h3>
+      <p id="gastos">$0</p>
+    </div>
+  </section>
 
-    <section class="form-movimiento">
-        <h2>Agregar Movimiento</h2>
-        <form id="form-movimiento">
-            <input type="date" id="fecha" required>
-            <input type="text" id="categoria" placeholder="Categoría" required>
-            <input type="number" id="monto" placeholder="Monto (+ ingreso, - gasto)" required>
-            <button type="submit">Agregar</button>
-        </form>
-    </section>
+  <!-- Formulario -->
+  <section class="form-movimiento">
+    <h2 id="form-title">Agregar Movimiento</h2>
+    <form id="form-movimiento">
+      <input type="date" id="fecha" required />
 
-    <!-- Tabla de movimientos -->
-    <section class="tabla">
-        <h2>Movimientos</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Categoría</th>
-                    <th>Monto</th>
-                </tr>
-            </thead>
-            <tbody id="lista-movimientos">
-                <!-- Tus movimientos en JS van a ir acá -->
-            </tbody>
-        </table>
-    </section>
+      <!-- Select de categorias con muchos ejemplos y opción "Otros" -->
+      <select id="categoria" required>
+        <option value="">-- Seleccioná categoría --</option>
+        <option value="Sueldo">Sueldo</option>
+        <option value="Venta">Venta</option>
+        <option value="Ahorro">Ahorro</option>
+        <option value="Alquiler">Alquiler</option>
+        <option value="Servicios">Servicios</option>
+        <option value="Comida">Comida</option>
+        <option value="Supermercado">Supermercado</option>
+        <option value="Transporte">Transporte</option>
+        <option value="Combustible">Combustible</option>
+        <option value="Salud">Salud</option>
+        <option value="Farmacia">Farmacia</option>
+        <option value="Educación">Educación</option>
+        <option value="Ocio">Ocio</option>
+        <option value="Restaurante">Restaurante</option>
+        <option value="Tecnologia">Tecnología</option>
+        <option value="Ropa">Ropa</option>
+        <option value="Deudas">Deudas</option>
+        <option value="Inversiones">Inversiones</option>
+        <option value="Impuestos">Impuestos</option>
+        <option value="Regalos">Regalos</option>
+        <option value="Otros">Otros</option>
+      </select>
 
-    <!-- Footer -->
-    <footer>
-        <p>© 2025 Mi Finanzas App</p>
-    </footer>
+      <!-- Campo que aparece si se selecciona "Otros" para aclarar -->
+      <input type="text" id="categoria-otros" placeholder="Aclarar categoría (solo si elegiste 'Otros')" style="display:none;" />
+
+      <input type="number" id="monto" placeholder="Monto (+ ingreso, - gasto)" required step="0.01" />
+
+      <!-- Botón cambia su texto cuando editás -->
+      <button type="submit" id="btn-submit">Agregar</button>
+      <button type="button" id="btn-cancel-edit" style="display:none;">Cancelar edición</button>
+    </form>
+  </section>
+
+  <!-- FILTROS -->
+  <section class="filtros" style="max-width:900px;margin:1rem auto;padding:1rem;">
+    <h3>Filtros</h3>
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+      <input type="text" id="filtro-texto" placeholder="Buscar por categoría o texto..." />
+      <select id="filtro-categoria">
+        <option value="">Todas las categorías</option>
+        <option value="Sueldo">Sueldo</option>
+        <option value="Venta">Venta</option>
+        <option value="Ahorro">Ahorro</option>
+        <option value="Alquiler">Alquiler</option>
+        <option value="Servicios">Servicios</option>
+        <option value="Comida">Comida</option>
+        <option value="Supermercado">Supermercado</option>
+        <option value="Transporte">Transporte</option>
+        <option value="Combustible">Combustible</option>
+        <option value="Salud">Salud</option>
+        <option value="Farmacia">Farmacia</option>
+        <option value="Educación">Educación</option>
+        <option value="Ocio">Ocio</option>
+        <option value="Restaurante">Restaurante</option>
+        <option value="Tecnologia">Tecnología</option>
+        <option value="Ropa">Ropa</option>
+        <option value="Deudas">Deudas</option>
+        <option value="Inversiones">Inversiones</option>
+        <option value="Impuestos">Impuestos</option>
+        <option value="Regalos">Regalos</option>
+        <option value="Otros">Otros</option>
+      </select>
+
+      <label>Desde <input type="date" id="filtro-desde" /></label>
+      <label>Hasta <input type="date" id="filtro-hasta" /></label>
+
+      <!-- Botones aplicar / limpiar -->
+      <button id="btn-aplicar-filtro">Aplicar</button>
+      <button id="btn-limpiar-filtro">Limpiar</button>
+    </div>
+  </section>
+
+  <!-- Tabla de movimientos (ahora puede agruparse por mes) -->
+  <section class="tabla">
+    <h2>Movimientos</h2>
+    <table id="tabla-movimientos" aria-live="polite">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Categoría</th>
+          <th>Monto</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="lista-movimientos">
+        <!-- Filas desde JS -->
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Modal de confirmación para eliminar (custom) -->
+  <div id="modal-confirm" class="modal" aria-hidden="true" role="dialog" aria-labelledby="modal-title" aria-modal="true">
+    <div class="modal-backdrop" data-modal-close></div>
+    <div class="modal-content" role="document">
+      <h3 id="modal-title">Confirmar eliminación</h3>
+      <p id="modal-text">¿Querés eliminar este movimiento?</p>
+      <div class="modal-actions">
+        <button id="modal-cancel" class="btn-accion">Cancelar</button>
+        <button id="modal-confirm-btn" class="btn-accion btn-eliminar">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p>© 2025 Mi Finanzas App</p>
+  </footer>
 </body>
 
 </html>

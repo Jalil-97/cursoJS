@@ -5,11 +5,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mi Finanzas App - Finanzas</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/styles.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-  <script src="../js/main.js" defer></script>
 </head>
 
 <body>
@@ -20,6 +20,7 @@
       <ul class="nav-links">
         <li><a href="../index.html">Inicio</a></li>
         <li><a href="./finanzas.html">Finanzas</a></li>
+        <li><a href="./graficos.html" class="active">Gráficos</a></li>
       </ul>
     </nav>
   </header>
@@ -74,10 +75,12 @@
         <option value="Regalos">Regalos</option>
         <option value="Otros">Otros</option>
       </select>
-      <input type="text" id="categoria-otros" placeholder="Aclarar categoría (solo si elegiste 'Otros')" style="display:none;" />
+      <input type="text" id="categoria-otros" placeholder="Aclarar categoría (solo si elegiste 'Otros')"
+        style="display:none;" />
       <input type="number" id="monto" placeholder="Monto" required step="0.01" />
       <button type="submit" id="btn-submit" class="btn btn-primary">Agregar</button>
-      <button type="button" id="btn-cancel-edit" class="btn btn-secondary" style="display:none;">Cancelar edición</button>
+      <button type="button" id="btn-cancel-edit" class="btn btn-secondary" style="display:none;">Cancelar
+        edición</button>
     </form>
   </section>
 
@@ -155,8 +158,11 @@
 
   <!-- Footer -->
   <footer>
-    <p>© 2025 Mi Finanzas App</p>
+        <p>Proyecto Finanzas &copy; 2025</p>
   </footer>
+
+  <script src="../js/main.js" defer></script>
+
 </body>
 
 </html>

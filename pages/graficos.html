@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Estadísticas - Finanzas</title>
+    <link rel="stylesheet" href="../css/styles.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <header>
+        <nav class="navbar">
+            <h1>Mis Finanzas</h1>
+            <ul class="nav-links">
+                <li><a href="../index.html">Inicio</a></li>
+                <li><a href="./finanzas.html">Finanzas</a></li>
+                <li><a href="./graficos.html" class="active">Gráficos</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <h2>Estadísticas</h2>
+
+        <section class="card">
+            <h3>Ingresos vs Gastos</h3>
+            <canvas id="graficoTorta"></canvas>
+        </section>
+
+        <section class="card">
+            <h3>Evolución mensual</h3>
+            <canvas id="graficoBarras"></canvas>
+        </section>
+    </main>
+
+    <footer>
+        <p>Proyecto Finanzas &copy; 2025</p>
+    </footer>
+
+    <script src="../js/main.js" defer></script>
+</body>
+
+</html>

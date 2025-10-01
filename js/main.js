@@ -1,225 +1,443 @@
-// =====================
-// Referencias al DOM
-// =====================
+
+const qs = sel => document.querySelector(sel);
+const qsa = sel => Array.from(document.querySelectorAll(sel));
+
+// Elementos del DOM
 const form = document.getElementById("form-movimiento");
-const lista = document.getElementById("lista-movimientos");
-const saldoEl = document.getElementById("saldo");
-const ingresosEl = document.getElementById("ingresos");
-const gastosEl = document.getElementById("gastos");
-
-// Botones de exportación
-const btnExportExcel = document.getElementById("btn-export-excel");
-const btnExportPdf = document.getElementById("btn-export-pdf");
-
-// Botón cancelar edición
 const btnCancelEdit = document.getElementById("btn-cancel-edit");
+const lista = document.getElementById("lista-movimientos"); // tbody
+const saldoEl = document.getElementById("saldo") || document.getElementById("total-saldo");
+const ingresosEl = document.getElementById("ingresos") || document.getElementById("total-ingresos");
+const gastosEl = document.getElementById("gastos") || document.getElementById("total-gastos");
+const btnExportExcel = document.getElementById("btn-export-excel") || document.getElementById("export-excel");
+const btnExportPdf = document.getElementById("btn-export-pdf") || document.getElementById("export-pdf");
+const modal = document.getElementById("modal-confirm");
+const modalConfirmBtn = document.getElementById("modal-confirm-btn");
+const modalCancelBtn = document.getElementById("modal-cancel");
 
-// =====================
-// Estado global
-// =====================
-let movimientos = JSON.parse(localStorage.getItem("movimientos")) || [];
-let editIndex = null; // índice del movimiento en edición
+// Form fields 
+const fechaInput = document.getElementById("fecha");
+const tipoInput = document.getElementById("tipo"); // ingreso / gasto
+const categoriaInput = document.getElementById("categoria");
+const categoriaOtrosInput = document.getElementById("categoria-otros");
+const montoInput = document.getElementById("monto");
+const descripcionInput = document.getElementById("descripcion"); // opcional
 
-// =====================
-// Guardar en localStorage con promesa
-// =====================
-const guardarMovimientos = () => {
-  return new Promise((resolve, reject) => {
+// Estado
+let movimientos = []; // array de objetos { fecha, tipo, categoria, monto, descripcion? }
+let editIndex = null; // índice en edición
+let idAEliminar = null; // índice pendiente de eliminación (para modal)
+
+/* ---------------------------
+   Funciones utilitarias
+----------------------------*/
+const formatMoney = n =>
+  `$${Math.abs(n).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+const tryFetch = async paths => {
+  for (const p of paths) {
+    try {
+      const res = await fetch(p);
+      if (res.ok) return res;
+    } catch (e) {
+     
+    }
+  }
+  throw new Error("No se pudo cargar data.json desde ninguna ruta probada");
+};
+
+/* ---------------------------
+   Carga inicial: data.json -> localStorage
+----------------------------*/
+const cargarDatosIniciales = async () => {
+  try {
+    const res = await tryFetch(["../data/data.json", "../data.json"]);
+    const data = await res.json();
+
+    if (!localStorage.getItem("movimientos")) {
+      movimientos = data;
+      localStorage.setItem("movimientos", JSON.stringify(movimientos));
+    } else {
+      movimientos = JSON.parse(localStorage.getItem("movimientos"));
+    }
+  } catch (err) {
+    console.error("Carga inicial fallida (data.json):", err);
+    movimientos = JSON.parse(localStorage.getItem("movimientos") || "[]");
+  } finally {
+    // siempre refrescamos la UI
+    actualizarTabla();
+    actualizarTotales();
+    inicializarGraficos(); // si estamos en graficos.html, generamos gráficos correctamente
+  }
+};
+
+/* ---------------------------
+   Guardar localmente (promesa)
+----------------------------*/
+const guardarLocal = () =>
+  new Promise((resolve, reject) => {
     try {
       localStorage.setItem("movimientos", JSON.stringify(movimientos));
-      resolve("Movimientos guardados correctamente");
-    } catch (error) {
-      reject("Error al guardar en localStorage");
+      resolve();
+    } catch (err) {
+      reject(err);
     }
   });
-};
 
-// =====================
-// Actualizar tabla y totales
-// =====================
+/* ---------------------------
+   Renderizar tabla
+----------------------------*/
 const actualizarTabla = () => {
-  lista.innerHTML = "";
-  let saldo = 0, ingresos = 0, gastos = 0;
+  if (!lista) return; 
 
-  movimientos.forEach((mov, index) => {
-    const montoFormateado = Math.abs(mov.monto).toLocaleString("es-AR", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+  lista.innerHTML = ""; // limpio
 
-    const fila = document.createElement("tr");
-    fila.innerHTML = `
+  movimientos.forEach((mov, idx) => {
+    // categoría puede incluir aclaración si existe
+    const categoriaTexto = mov.categoria + (mov.categoriaAclaracion ? ` (${mov.categoriaAclaracion})` : "");
+    const montoForm = mov.monto < 0
+      ? `<span class="gasto">-${formatMoney(mov.monto)}</span>`
+      : `<span class="ingreso">+${formatMoney(mov.monto)}</span>`;
+
+    // Fila, columna 'descripcion' no asumo en tabla; si existió la puse como pequeño debajo de categoría
+    const descripcionHtml = mov.descripcion ? `<div class="small muted">${mov.descripcion}</div>` : "";
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
       <td>${mov.fecha}</td>
-      <td>${mov.tipo}</td>
-      <td>${mov.categoria}</td>
-      <td>${mov.monto < 0
-        ? `<span class="gasto">-$${montoFormateado}</span>`
-        : `<span class="ingreso">+$${montoFormateado}</span>`}
-      </td>
+      <td>${(mov.tipo || "").toString()}</td>
+      <td>${categoriaTexto}${descripcionHtml}</td>
+      <td>${montoForm}</td>
       <td>
-  <button class="btn btn-secondary editar" data-index="${index}">Editar</button>
-  <button class="btn btn-danger eliminar" data-index="${index}">Eliminar</button>
+        <button class="btn btn-secondary editar" data-index="${idx}">Editar</button>
+        <button class="btn btn-danger eliminar" data-index="${idx}">Eliminar</button>
       </td>
     `;
-    lista.appendChild(fila);
-
-    if (mov.monto >= 0) ingresos += mov.monto;
-    else gastos += Math.abs(mov.monto);
+    lista.appendChild(tr);
   });
 
-  saldo = ingresos - gastos;
-  saldoEl.textContent = `$${saldo.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  ingresosEl.textContent = `$${ingresos.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  gastosEl.textContent = `$${gastos.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
 };
 
-// =====================
-// Inicializar
-// =====================
-actualizarTabla();
+/* ---------------------------
+   Actualizar totales
+----------------------------*/
+const actualizarTotales = () => {
+  if (!saldoEl && !ingresosEl && !gastosEl) return;
 
-// =====================
-// Envío del formulario (Agregar/Editar)
-// =====================
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const fecha = document.getElementById("fecha").value;
-  const tipo = document.getElementById("tipo").value;
-  let categoria = document.getElementById("categoria").value;
-  const montoBase = Number(document.getElementById("monto").value);
+  const ingresos = movimientos
+    .filter(m => String(m.tipo).toLowerCase() === "ingreso")
+    .reduce((acc, m) => acc + Number(m.monto), 0);
 
-  if (!fecha || !tipo || !categoria || isNaN(montoBase)) {
-    alert("Por favor completá todos los campos");
-    return;
-  }
+  const gastos = movimientos
+    .filter(m => String(m.tipo).toLowerCase() === "gasto")
+    .reduce((acc, m) => acc + Math.abs(Number(m.monto)), 0);
 
-  if (categoria === "Otros") {
-    const extra = document.getElementById("categoria-otros").value.trim();
-    if (extra) categoria += ` (${extra})`;
-  }
+  const saldo = ingresos - gastos;
 
-  const monto = tipo === "gasto" ? -Math.abs(montoBase) : Math.abs(montoBase);
+  if (ingresosEl) ingresosEl.textContent = formatMoney(ingresos);
+  if (gastosEl) gastosEl.textContent = formatMoney(gastos);
+  if (saldoEl) saldoEl.textContent = formatMoney(saldo);
+};
 
-  if (editIndex !== null) {
-    // Editar
-    movimientos[editIndex] = { fecha, tipo, categoria, monto };
-    editIndex = null;
-    btnCancelEdit.style.display = "none";
-    document.getElementById("btn-submit").textContent = "Agregar";
-  } else {
-    // Agregar nuevo
-    movimientos.push({ fecha, tipo, categoria, monto });
-  }
+/* ---------------------------
+   Agregar / Editar (submit del form)
+----------------------------*/
+if (form) {
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
 
-  await guardarMovimientos()
-    .then((msg) => console.log(msg))
-    .catch((err) => console.error(err))
-    .finally(() => actualizarTabla());
+   
+    const fecha = fechaInput ? fechaInput.value : "";
+    const tipo = tipoInput ? tipoInput.value : (typeof movDefaultTipo !== "undefined" ? movDefaultTipo : "Ingreso");
+    const categoria = categoriaInput ? categoriaInput.value : "Otros";
+    const categoriaAclaracion = categoriaOtrosInput ? categoriaOtrosInput.value.trim() : "";
+    const montoRaw = montoInput ? parseFloat(montoInput.value) : 0;
+    const descripcion = descripcionInput ? descripcionInput.value.trim() : "";
 
-  form.reset();
-  document.getElementById("categoria-otros").style.display = "none";
-});
-
-// =====================
-// Cancelar edición
-// =====================
-btnCancelEdit.addEventListener("click", () => {
-  editIndex = null;
-  form.reset();
-  btnCancelEdit.style.display = "none";
-  document.getElementById("btn-submit").textContent = "Agregar";
-});
-
-// =====================
-// Manejo de acciones (Editar/Eliminar)
-// =====================
-lista.addEventListener("click", (e) => {
-  const index = e.target.getAttribute("data-index");
-  if (e.target.classList.contains("editar")) {
-    // Editar
-    const mov = movimientos[index];
-    document.getElementById("fecha").value = mov.fecha;
-    document.getElementById("tipo").value = mov.tipo;
-    document.getElementById("categoria").value = mov.categoria.includes("(")
-      ? "Otros"
-      : mov.categoria;
-    if (mov.categoria.startsWith("Otros")) {
-      const extra = mov.categoria.match(/\((.*?)\)/);
-      if (extra) {
-        document.getElementById("categoria-otros").value = extra[1];
-        document.getElementById("categoria-otros").style.display = "block";
-      }
+    if (!fecha || !tipo || !categoria || isNaN(montoRaw)) {
+      alert("Por favor completá todos los campos correctamente.");
+      return;
     }
-    document.getElementById("monto").value = Math.abs(mov.monto);
 
-    editIndex = index;
-    btnCancelEdit.style.display = "inline-block";
-    document.getElementById("btn-submit").textContent = "Guardar cambios";
-  }
+    // Ajustar signo según tipo (acepta "Gasto"/"gasto"/"gasto ")
+    let monto = Number(montoRaw);
+    if (String(tipo).toLowerCase() === "gasto" && monto > 0) monto = -Math.abs(monto);
+    if (String(tipo).toLowerCase() === "ingreso") monto = Math.abs(monto);
 
-  if (e.target.classList.contains("eliminar")) {
-    const modal = document.getElementById("modal-confirm");
-    const btnConfirm = document.getElementById("modal-confirm-btn");
-    const btnCancel = document.getElementById("modal-cancel");
-    modal.style.display = "flex";
-
-    btnConfirm.onclick = async () => {
-      movimientos.splice(index, 1);
-      await guardarMovimientos()
-        .then(() => actualizarTabla())
-        .catch((err) => console.error(err))
-        .finally(() => (modal.style.display = "none"));
+    const nuevo = {
+      fecha,
+      tipo,
+      categoria,
+      categoriaAclaracion: categoriaAclaracion || undefined,
+      monto,
+      descripcion: descripcion || undefined
     };
 
-    btnCancel.onclick = () => {
+    if (editIndex !== null) {
+      // editar existente
+      movimientos[editIndex] = nuevo;
+      editIndex = null;
+      if (btnCancelEdit) btnCancelEdit.style.display = "none";
+      const submitBtn = document.getElementById("btn-submit");
+      if (submitBtn) submitBtn.textContent = "Agregar";
+    } else {
+      // agregar nuevo
+      movimientos.push(nuevo);
+    }
+
+    // guardar y actualizar UI
+    await guardarLocal()
+      .then(() => {
+        actualizarTabla();
+        actualizarTotales();
+        form.reset();
+        if (categoriaOtrosInput) categoriaOtrosInput.style.display = "none";
+      })
+      .catch(err => console.error("Error guardando:", err));
+  });
+}
+
+/* ---------------------------
+   Delegación de eventos en la tabla (Editar / Eliminar)
+----------------------------*/
+if (lista) {
+  lista.addEventListener("click", e => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+    const idx = Number(btn.dataset.index);
+    if (btn.classList.contains("editar")) {
+      // rellenar form para editar
+      const mov = movimientos[idx];
+      if (!mov) return alert("Movimiento no encontrado para editar");
+
+      if (fechaInput) fechaInput.value = mov.fecha;
+      if (tipoInput) tipoInput.value = mov.tipo || "Ingreso";
+      if (categoriaInput) categoriaInput.value = mov.categoria || "";
+      if (categoriaOtrosInput) {
+        if (mov.categoriaAclaracion) {
+          categoriaOtrosInput.style.display = "block";
+          categoriaOtrosInput.value = mov.categoriaAclaracion;
+        } else {
+          categoriaOtrosInput.style.display = "none";
+          categoriaOtrosInput.value = "";
+        }
+      }
+      if (montoInput) montoInput.value = Math.abs(mov.monto);
+      if (descripcionInput) descripcionInput.value = mov.descripcion || "";
+
+      editIndex = idx;
+      if (btnCancelEdit) btnCancelEdit.style.display = "inline-block";
+      const submitBtn = document.getElementById("btn-submit");
+      if (submitBtn) submitBtn.textContent = "Guardar cambios";
+      return;
+    }
+
+    if (btn.classList.contains("eliminar")) {
+      if (modal && modalConfirmBtn && modalCancelBtn) {
+        idAEliminar = idx;
+        modal.setAttribute("aria-hidden", "false");
+        modal.style.display = "flex";
+      } else {
+        if (confirm("¿Seguro que querés eliminar este movimiento?")) {
+          movimientos.splice(idx, 1);
+          guardarLocal()
+            .then(() => {
+              actualizarTabla();
+              actualizarTotales();
+            })
+            .catch(err => console.error(err));
+        }
+      }
+      return;
+    }
+  });
+}
+
+/* ---------------------------
+   Modal: Confirmar eliminación (si existe modal custom)
+----------------------------*/
+if (modal && modalConfirmBtn && modalCancelBtn) {
+  modalConfirmBtn.addEventListener("click", async () => {
+    if (typeof idAEliminar === "number") {
+      movimientos.splice(idAEliminar, 1);
+      idAEliminar = null;
+      await guardarLocal()
+        .then(() => {
+          modal.style.display = "none";
+          modal.setAttribute("aria-hidden", "true");
+          actualizarTabla();
+          actualizarTotales();
+        })
+        .catch(err => console.error("Error eliminando:", err));
+    } else {
       modal.style.display = "none";
-    };
+      modal.setAttribute("aria-hidden", "true");
+    }
+  });
+
+  modalCancelBtn.addEventListener("click", () => {
+    idAEliminar = null;
+    modal.style.display = "none";
+    modal.setAttribute("aria-hidden", "true");
+  });
+
+  const backdrop = modal.querySelector(".modal-backdrop");
+  if (backdrop) backdrop.addEventListener("click", () => {
+    modal.style.display = "none";
+    modal.setAttribute("aria-hidden", "true");
+    idAEliminar = null;
+  });
+}
+
+/* ---------------------------
+   Botón cancelar edición (si existe)
+----------------------------*/
+if (btnCancelEdit) {
+  btnCancelEdit.addEventListener("click", () => {
+    editIndex = null;
+    if (form) form.reset();
+    btnCancelEdit.style.display = "none";
+    const submitBtn = document.getElementById("btn-submit");
+    if (submitBtn) submitBtn.textContent = "Agregar";
+    if (categoriaOtrosInput) categoriaOtrosInput.style.display = "none";
+  });
+}
+
+/* ---------------------------
+   Exportar Excel / PDF (IDs flexibles)
+----------------------------*/
+const exportToExcel = () => {
+  if (typeof XLSX === "undefined") {
+    return alert("SheetJS (XLSX) no está cargado.");
   }
-});
+  // Construyo una copia amigable para Excel
+  const rows = movimientos.map(m => ({
+    Fecha: m.fecha,
+    Tipo: m.tipo,
+    Categoria: m.categoria + (m.categoriaAclaracion ? ` (${m.categoriaAclaracion})` : ""),
+    Descripcion: m.descripcion || "",
+    Monto: m.monto
+  }));
 
-// =====================
-// Exportar a Excel
-// =====================
-btnExportExcel.addEventListener("click", () => {
-  new Promise((resolve) => {
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(movimientos);
-    XLSX.utils.book_append_sheet(wb, ws, "Movimientos");
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(rows);
+  XLSX.utils.book_append_sheet(wb, ws, "Movimientos");
 
-    const totales = [
-      { Saldo: saldoEl.textContent },
-      { Ingresos: ingresosEl.textContent },
-      { Gastos: gastosEl.textContent },
-    ];
-    const wsTotales = XLSX.utils.json_to_sheet(totales);
-    XLSX.utils.book_append_sheet(wb, wsTotales, "Totales");
+  // Totales en hoja separada
+  const ingresos = movimientos.filter(m => String(m.tipo).toLowerCase() === "ingreso").reduce((a, c) => a + c.monto, 0);
+  const gastos = movimientos.filter(m => String(m.tipo).toLowerCase() === "gasto").reduce((a, c) => a + Math.abs(c.monto), 0);
+  const saldo = ingresos - gastos;
+  const wsT = XLSX.utils.json_to_sheet([{ Saldo: saldo }, { Ingresos: ingresos }, { Gastos: gastos }]);
+  XLSX.utils.book_append_sheet(wb, wsT, "Totales");
 
-    resolve(wb);
-  })
-    .then((wb) => XLSX.writeFile(wb, "mis-movimientos.xlsx"))
-    .catch((err) => console.error("Error al exportar Excel:", err))
-    .finally(() => console.log("Exportación Excel finalizada"));
-});
+  XLSX.writeFile(wb, "mis-movimientos.xlsx");
+};
 
-// =====================
-// Exportar a PDF
-// =====================
-btnExportPdf.addEventListener("click", () => {
-  new Promise((resolve) => {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+const exportToPDF = () => {
+  if (typeof jspdf === "undefined" && typeof window.jspdf === "undefined") {
+    // try direct global
+    if (typeof jsPDF === "undefined" && !(window && window.jspdf)) {
+      return alert("jsPDF o autoTable no cargados.");
+    }
+  }
+  // uso de la API de jsPDF (compatibilidad con loader)
+  const { jsPDF } = window.jspdf || { jsPDF };
+  const doc = new jsPDF();
+  doc.text("Mis movimientos", 14, 15);
 
-    doc.text("Mis movimientos", 14, 15);
-    doc.autoTable({ html: "#tabla-movimientos", startY: 20 });
+  // construyo tabla simple
+  const head = [["Fecha", "Tipo", "Categoria", "Descripción", "Monto"]];
+  const body = movimientos.map(m => [
+    m.fecha,
+    m.tipo,
+    m.categoria + (m.categoriaAclaracion ? ` (${m.categoriaAclaracion})` : ""),
+    m.descripcion || "",
+    m.monto
+  ]);
 
-    let y = doc.lastAutoTable.finalY + 10;
-    doc.text(`Saldo: ${saldoEl.textContent}`, 14, y);
-    doc.text(`Ingresos: ${ingresosEl.textContent}`, 14, y + 10);
-    doc.text(`Gastos: ${gastosEl.textContent}`, 14, y + 20);
+  doc.autoTable({ head, body, startY: 25 });
+  // totales
+  const ingresos = movimientos.filter(m => String(m.tipo).toLowerCase() === "ingreso").reduce((a, c) => a + c.monto, 0);
+  const gastos = movimientos.filter(m => String(m.tipo).toLowerCase() === "gasto").reduce((a, c) => a + Math.abs(c.monto), 0);
+  const saldo = ingresos - gastos;
 
-    resolve(doc);
-  })
-    .then((doc) => doc.save("mis-movimientos.pdf"))
-    .catch((err) => console.error("Error al exportar PDF:", err))
-    .finally(() => console.log("Exportación PDF finalizada"));
-});
+  let y = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 25;
+  doc.text(`Saldo: ${formatMoney(saldo)}`, 14, y);
+  doc.text(`Ingresos: ${formatMoney(ingresos)}`, 14, y + 8);
+  doc.text(`Gastos: ${formatMoney(gastos)}`, 14, y + 16);
+
+  doc.save("mis-movimientos.pdf");
+};
+
+if (btnExportExcel) btnExportExcel.addEventListener("click", exportToExcel);
+if (btnExportPdf) btnExportPdf.addEventListener("click", exportToPDF);
+
+/* ---------------------------
+   GRÁFICOS (Chart.js) - inicializa/destruye correctamente
+----------------------------*/
+let chartTorta = null;
+let chartBarras = null;
+
+const inicializarGraficos = () => {
+  // solo si Chart está cargado y estamos en la page de gráficos
+  if (typeof Chart === "undefined") return;
+
+  // torta (Ingresos vs Gastos)
+  const elTorta = document.getElementById("graficoTorta");
+  if (elTorta) {
+    if (chartTorta) chartTorta.destroy();
+
+    const ingresos = movimientos.filter(m => String(m.tipo).toLowerCase() === "ingreso").reduce((a, c) => a + c.monto, 0);
+    const gastos = movimientos.filter(m => String(m.tipo).toLowerCase() === "gasto").reduce((a, c) => a + Math.abs(c.monto), 0);
+
+    chartTorta = new Chart(elTorta.getContext("2d"), {
+      type: "doughnut",
+      data: {
+        labels: ["Ingresos", "Gastos"],
+        datasets: [{ data: [ingresos, gastos], backgroundColor: ["#28a745", "#dc3545"] }]
+      },
+      options: { responsive: true, plugins: { legend: { position: "bottom" } } }
+    });
+  }
+
+  // barras por mes
+  const elBarras = document.getElementById("graficoBarras");
+  if (elBarras) {
+    if (chartBarras) chartBarras.destroy();
+
+    const agrup = {};
+    movimientos.forEach(m => {
+      const d = new Date(m.fecha);
+      if (isNaN(d)) return;
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; // YYYY-MM
+      if (!agrup[key]) agrup[key] = { ingresos: 0, gastos: 0 };
+      if (String(m.tipo).toLowerCase() === "ingreso") agrup[key].ingresos += m.monto;
+      else agrup[key].gastos += Math.abs(m.monto);
+    });
+
+    const keys = Object.keys(agrup).sort();
+    const labels = keys.map(k => {
+      const [y, mm] = k.split("-");
+      return new Date(`${y}-${mm}-01`).toLocaleString("es-ES", { month: "short", year: "numeric" });
+    });
+    const datosIngresos = keys.map(k => agrup[k].ingresos);
+    const datosGastos = keys.map(k => agrup[k].gastos);
+
+    chartBarras = new Chart(elBarras.getContext("2d"), {
+      type: "bar",
+      data: {
+        labels, datasets: [
+          { label: "Ingresos", data: datosIngresos, backgroundColor: "#28a745" },
+          { label: "Gastos", data: datosGastos, backgroundColor: "#dc3545" }
+        ]
+      },
+      options: { responsive: true, plugins: { legend: { position: "top" } } }
+    });
+  }
+};
+
+/* 
+   Inicialización: cargar datos y prender la app
+-*/
+cargarDatosIniciales();

@@ -1,0 +1,205 @@
+[
+    {
+        "fecha": "2025-01-05",
+        "descripcion": "Sueldo",
+        "categoria": "Ingreso",
+        "monto": 250000,
+        "tipo": "Ingreso"
+    },
+    {
+        "fecha": "2025-01-08",
+        "descripcion": "Supermercado",
+        "categoria": "Comida",
+        "monto": -32000,
+        "tipo": "Gasto"
+    },
+    {
+        "fecha": "2025-01-15",
+        "descripcion": "Alquiler",
+        "categoria": "Vivienda",
+        "monto": -95000,
+        "tipo": "Gasto"
+    },
+    {
+        "fecha": "2025-01-22",
+        "descripcion": "Cine y cena",
+        "categoria": "Ocio",
+        "monto": -18000,
+        "tipo": "Gasto"
+    },
+    {
+        "fecha": "2025-02-05",
+        "descripcion": "Sueldo",
+        "categoria": "Ingreso",
+        "monto": 260000,
+        "tipo": "Ingreso"
+    },
+    {
+        "fecha": "2025-02-09",
+        "descripcion": "Supermercado",
+        "categoria": "Comida",
+        "monto": -34500,
+        "tipo": "Gasto"
+    },
+    {
+        "fecha": "2025-02-12",
+        "descripcion": "Freelance diseño",
+        "categoria": "Ingreso extra",
+        "monto": 50000,
+        "tipo": "Ingreso"
+    },
+    {
+        "fecha": "2025-02-18",
+        "descripcion": "Internet y celular",
+        "categoria": "Servicios",
+        "monto": -12000,
+        "tipo": "Gasto"
+    },
+    {
+        "fecha": "2025-02-25",
+        "descripcion": "Nafta",
+        "categoria": "Transporte",
+        "monto": -14000,
+        "tipo": "Gasto"
+    },
+    {
+        "fecha": "2025-03-05",
+        "descripcion": "Sueldo",
+        "categoria": "Ingreso",
+        "monto": 270000,
+        "tipo": "Ingreso"
+    },
+    {
+        "fecha": "2025-03-10",
+        "descripcion": "Supermercado",
+        "categoria": "Comida",
+        "monto": -36000,
+        "tipo": "Gasto"
+    },
+    {
+        "fecha": "2025-03-15",
+        "descripcion": "Alquiler",
+        "categoria": "Vivienda",
+        "monto": -100000,
+        "tipo": "Gasto"
+    },
+    {
+        "fecha": "2025-03-20",
+        "descripcion": "Médico y farmacia",
+        "categoria": "Salud",
+        "monto": -22000,
+        "tipo": "Gasto"
+    },
+    {
+        "fecha": "2025-03-28",
+        "descripcion": "Venta notebook usada",
+        "categoria": "Ingreso extra",
+        "monto": 85000,
+        "tipo": "Ingreso"
+    },
+    {
+        "fecha": "2025-04-05",
+        "descripcion": "Sueldo",
+        "categoria": "Ingreso",
+        "monto": 270000,
+        "tipo": "Ingreso"
+    },
+    {
+        "fecha": "2025-04-09",
+        "descripcion": "Supermercado",
+        "categoria": "Comida",
+        "monto": -37000,
+        "tipo": "Gasto"
+    },
+    {
+        "fecha": "2025-04-14",
+        "descripcion": "Medicina prepaga",
+        "categoria": "Salud",
+        "monto": -35000,
+        "tipo": "Gasto"
+    },
+    {
+        "fecha": "2025-04-20",
+        "descripcion": "Gas y electricidad",
+        "categoria": "Servicios",
+        "monto": -18000,
+        "tipo": "Gasto"
+    },
+    {
+        "fecha": "2025-04-25",
+        "descripcion": "Cena cumpleaños",
+        "categoria": "Ocio",
+        "monto": -25000,
+        "tipo": "Gasto"
+    },
+    {
+        "fecha": "2025-05-05",
+        "descripcion": "Sueldo",
+        "categoria": "Ingreso",
+        "monto": 280000,
+        "tipo": "Ingreso"
+    },
+    {
+        "fecha": "2025-05-07",
+        "descripcion": "Freelance programación",
+        "categoria": "Ingreso extra",
+        "monto": 120000,
+        "tipo": "Ingreso"
+    },
+    {
+        "fecha": "2025-05-12",
+        "descripcion": "Supermercado",
+        "categoria": "Comida",
+        "monto": -38000,
+        "tipo": "Gasto"
+    },
+    {
+        "fecha": "2025-05-15",
+        "descripcion": "Alquiler",
+        "categoria": "Vivienda",
+        "monto": -105000,
+        "tipo": "Gasto"
+    },
+    {
+        "fecha": "2025-05-19",
+        "descripcion": "Ropa",
+        "categoria": "Otros",
+        "monto": -28000,
+        "tipo": "Gasto"
+    },
+    {
+        "fecha": "2025-06-05",
+        "descripcion": "Sueldo",
+        "categoria": "Ingreso",
+        "monto": 285000,
+        "tipo": "Ingreso"
+    },
+    {
+        "fecha": "2025-06-10",
+        "descripcion": "Supermercado",
+        "categoria": "Comida",
+        "monto": -39000,
+        "tipo": "Gasto"
+    },
+    {
+        "fecha": "2025-06-14",
+        "descripcion": "Seguro del auto",
+        "categoria": "Transporte",
+        "monto": -22000,
+        "tipo": "Gasto"
+    },
+    {
+        "fecha": "2025-06-18",
+        "descripcion": "Gas y electricidad",
+        "categoria": "Servicios",
+        "monto": -20000,
+        "tipo": "Gasto"
+    },
+    {
+        "fecha": "2025-06-22",
+        "descripcion": "Salida con amigos",
+        "categoria": "Ocio",
+        "monto": -30000,
+        "tipo": "Gasto"
+    }
+]

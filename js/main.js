@@ -51,7 +51,7 @@ const tryFetch = async paths => {
 ----------------------------*/
 const cargarDatosIniciales = async () => {
   try {
-    const res = await tryFetch(["/data/data.json", "../data.json"]);
+    const res = await tryFetch(["../data/data.json", "/data/data.json", "../data.json"]);
     const data = await res.json();
 
     if (!localStorage.getItem("movimientos")) {

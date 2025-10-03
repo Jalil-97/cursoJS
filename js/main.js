@@ -22,6 +22,17 @@ const categoriaInput = document.getElementById("categoria");
 const categoriaOtrosInput = document.getElementById("categoria-otros");
 const montoInput = document.getElementById("monto");
 const descripcionInput = document.getElementById("descripcion"); // opcional
+// Mostrar/ocultar aclaración cuando se elige "Otros"
+if (categoriaInput && categoriaOtrosInput) {
+  categoriaInput.addEventListener("change", () => {
+    if (categoriaInput.value.toLowerCase() === "otros") {
+      categoriaOtrosInput.style.display = "block";
+    } else {
+      categoriaOtrosInput.style.display = "none";
+      categoriaOtrosInput.value = "";
+    }
+  });
+}
 
 // Estado
 let movimientos = []; // array de objetos { fecha, tipo, categoria, monto, descripcion? }
@@ -31,8 +42,21 @@ let idAEliminar = null; // índice pendiente de eliminación (para modal)
 /* ---------------------------
    Funciones utilitarias
 ----------------------------*/
-const formatMoney = n =>
-  `$${Math.abs(n).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const formatMoney = n => {
+  const num = Number(n);
+  const formatted = Math.abs(num).toLocaleString("es-AR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+  return num < 0 ? `-$${formatted}` : `$${formatted}`;
+};
+
+const formatDate = isoDate => {
+  if (!isoDate) return "";
+  const [year, month, day] = isoDate.split("-");
+  return `${day}/${month}/${year}`;
+};
+
 
 const tryFetch = async paths => {
   for (const p of paths) {
@@ -40,7 +64,7 @@ const tryFetch = async paths => {
       const res = await fetch(p);
       if (res.ok) return res;
     } catch (e) {
-     
+
     }
   }
   throw new Error("No se pudo cargar data.json desde ninguna ruta probada");
@@ -88,36 +112,39 @@ const guardarLocal = () =>
    Renderizar tabla
 ----------------------------*/
 const actualizarTabla = () => {
-  if (!lista) return; 
+  if (!lista) return;
 
   lista.innerHTML = ""; // limpio
 
-  movimientos.forEach((mov, idx) => {
+  // Ordenar por fecha (más reciente arriba)
+  const movimientosOrdenados = [...movimientos].sort((a, b) => {
+    return new Date(b.fecha) - new Date(a.fecha);
+  });
+
+  movimientosOrdenados.forEach((mov) => {
     // categoría puede incluir aclaración si existe
     const categoriaTexto = mov.categoria + (mov.categoriaAclaracion ? ` (${mov.categoriaAclaracion})` : "");
     const montoForm = mov.monto < 0
-      ? `<span class="gasto">-${formatMoney(mov.monto)}</span>`
+      ? `<span class="gasto">${formatMoney(mov.monto)}</span>`
       : `<span class="ingreso">+${formatMoney(mov.monto)}</span>`;
 
-    // Fila, columna 'descripcion' no asumo en tabla; si existió la puse como pequeño debajo de categoría
     const descripcionHtml = mov.descripcion ? `<div class="small muted">${mov.descripcion}</div>` : "";
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${mov.fecha}</td>
+      <td>${formatDate(mov.fecha)}</td>
       <td>${(mov.tipo || "").toString()}</td>
       <td>${categoriaTexto}${descripcionHtml}</td>
       <td>${montoForm}</td>
       <td>
-        <button class="btn btn-secondary editar" data-index="${idx}">Editar</button>
-        <button class="btn btn-danger eliminar" data-index="${idx}">Eliminar</button>
+        <button class="btn btn-secondary editar" data-id="${mov.id}">Editar</button>
+        <button class="btn btn-danger eliminar" data-id="${mov.id}">Eliminar</button>
       </td>
     `;
     lista.appendChild(tr);
   });
-
-
 };
+
 
 /* ---------------------------
    Actualizar totales
@@ -147,7 +174,7 @@ if (form) {
   form.addEventListener("submit", async e => {
     e.preventDefault();
 
-   
+
     const fecha = fechaInput ? fechaInput.value : "";
     const tipo = tipoInput ? tipoInput.value : (typeof movDefaultTipo !== "undefined" ? movDefaultTipo : "Ingreso");
     const categoria = categoriaInput ? categoriaInput.value : "Otros";
@@ -183,7 +210,15 @@ if (form) {
       if (submitBtn) submitBtn.textContent = "Agregar";
     } else {
       // agregar nuevo
-      movimientos.push(nuevo);
+      movimientos.push({
+        id: Date.now(), // ✅ id único
+        descripcion,
+        monto,
+        fecha,
+        categoria,
+        categoriaAclaracion,
+        tipo
+      });
     }
 
     // guardar y actualizar UI
@@ -205,10 +240,10 @@ if (lista) {
   lista.addEventListener("click", e => {
     const btn = e.target.closest("button");
     if (!btn) return;
-    const idx = Number(btn.dataset.index);
+    const id = Number(btn.dataset.index);
     if (btn.classList.contains("editar")) {
       // rellenar form para editar
-      const mov = movimientos[idx];
+      const mov = movimientos[id];
       if (!mov) return alert("Movimiento no encontrado para editar");
 
       if (fechaInput) fechaInput.value = mov.fecha;
@@ -226,7 +261,7 @@ if (lista) {
       if (montoInput) montoInput.value = Math.abs(mov.monto);
       if (descripcionInput) descripcionInput.value = mov.descripcion || "";
 
-      editIndex = idx;
+      editIndex = id;
       if (btnCancelEdit) btnCancelEdit.style.display = "inline-block";
       const submitBtn = document.getElementById("btn-submit");
       if (submitBtn) submitBtn.textContent = "Guardar cambios";
@@ -235,12 +270,12 @@ if (lista) {
 
     if (btn.classList.contains("eliminar")) {
       if (modal && modalConfirmBtn && modalCancelBtn) {
-        idAEliminar = idx;
+        idAEliminar = id;
         modal.setAttribute("aria-hidden", "false");
         modal.style.display = "flex";
       } else {
         if (confirm("¿Seguro que querés eliminar este movimiento?")) {
-          movimientos.splice(idx, 1);
+          movimientos.splice(id, 1);
           guardarLocal()
             .then(() => {
               actualizarTabla();

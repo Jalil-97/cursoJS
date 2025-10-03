@@ -1,4 +1,3 @@
-
 const qs = sel => document.querySelector(sel);
 const qsa = sel => Array.from(document.querySelectorAll(sel));
 
@@ -22,6 +21,7 @@ const categoriaInput = document.getElementById("categoria");
 const categoriaOtrosInput = document.getElementById("categoria-otros");
 const montoInput = document.getElementById("monto");
 const descripcionInput = document.getElementById("descripcion"); // opcional
+
 // Mostrar/ocultar aclaración cuando se elige "Otros"
 if (categoriaInput && categoriaOtrosInput) {
   categoriaInput.addEventListener("change", () => {
@@ -35,9 +35,9 @@ if (categoriaInput && categoriaOtrosInput) {
 }
 
 // Estado
-let movimientos = []; // array de objetos { fecha, tipo, categoria, monto, descripcion? }
-let editIndex = null; // índice en edición
-let idAEliminar = null; // índice pendiente de eliminación (para modal)
+let movimientos = []; // array de objetos { fecha, tipo, categoria, monto, descripcion?, id }
+let editId = null; // id en edición
+let idAEliminar = null; // id pendiente de eliminación (para modal)
 
 /* ---------------------------
    Funciones utilitarias
@@ -57,15 +57,12 @@ const formatDate = isoDate => {
   return `${day}/${month}/${year}`;
 };
 
-
 const tryFetch = async paths => {
   for (const p of paths) {
     try {
       const res = await fetch(p);
       if (res.ok) return res;
-    } catch (e) {
-
-    }
+    } catch (e) {}
   }
   throw new Error("No se pudo cargar data.json desde ninguna ruta probada");
 };
@@ -79,7 +76,7 @@ const cargarDatosIniciales = async () => {
     const data = await res.json();
 
     if (!localStorage.getItem("movimientos")) {
-      movimientos = data;
+      movimientos = data.map(m => ({ ...m, id: Date.now() + Math.random() })); // asegurar id único
       localStorage.setItem("movimientos", JSON.stringify(movimientos));
     } else {
       movimientos = JSON.parse(localStorage.getItem("movimientos"));
@@ -88,10 +85,9 @@ const cargarDatosIniciales = async () => {
     console.error("Carga inicial fallida (data.json):", err);
     movimientos = JSON.parse(localStorage.getItem("movimientos") || "[]");
   } finally {
-    // siempre refrescamos la UI
     actualizarTabla();
     actualizarTotales();
-    inicializarGraficos(); // si estamos en graficos.html, generamos gráficos correctamente
+    inicializarGraficos();
   }
 };
 
@@ -113,27 +109,21 @@ const guardarLocal = () =>
 ----------------------------*/
 const actualizarTabla = () => {
   if (!lista) return;
+  lista.innerHTML = "";
 
-  lista.innerHTML = ""; // limpio
+  const movimientosOrdenados = [...movimientos].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 
-  // Ordenar por fecha (más reciente arriba)
-  const movimientosOrdenados = [...movimientos].sort((a, b) => {
-    return new Date(b.fecha) - new Date(a.fecha);
-  });
-
-  movimientosOrdenados.forEach((mov) => {
-    // categoría puede incluir aclaración si existe
+  movimientosOrdenados.forEach(mov => {
     const categoriaTexto = mov.categoria + (mov.categoriaAclaracion ? ` (${mov.categoriaAclaracion})` : "");
     const montoForm = mov.monto < 0
       ? `<span class="gasto">${formatMoney(mov.monto)}</span>`
       : `<span class="ingreso">+${formatMoney(mov.monto)}</span>`;
-
     const descripcionHtml = mov.descripcion ? `<div class="small muted">${mov.descripcion}</div>` : "";
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${formatDate(mov.fecha)}</td>
-      <td>${(mov.tipo || "").toString()}</td>
+      <td>${mov.tipo || ""}</td>
       <td>${categoriaTexto}${descripcionHtml}</td>
       <td>${montoForm}</td>
       <td>
@@ -144,7 +134,6 @@ const actualizarTabla = () => {
     lista.appendChild(tr);
   });
 };
-
 
 /* ---------------------------
    Actualizar totales
@@ -174,9 +163,8 @@ if (form) {
   form.addEventListener("submit", async e => {
     e.preventDefault();
 
-
     const fecha = fechaInput ? fechaInput.value : "";
-    const tipo = tipoInput ? tipoInput.value : (typeof movDefaultTipo !== "undefined" ? movDefaultTipo : "Ingreso");
+    const tipo = tipoInput ? tipoInput.value : "Ingreso";
     const categoria = categoriaInput ? categoriaInput.value : "Otros";
     const categoriaAclaracion = categoriaOtrosInput ? categoriaOtrosInput.value.trim() : "";
     const montoRaw = montoInput ? parseFloat(montoInput.value) : 0;
@@ -187,41 +175,25 @@ if (form) {
       return;
     }
 
-    // Ajustar signo según tipo (acepta "Gasto"/"gasto"/"gasto ")
     let monto = Number(montoRaw);
     if (String(tipo).toLowerCase() === "gasto" && monto > 0) monto = -Math.abs(monto);
     if (String(tipo).toLowerCase() === "ingreso") monto = Math.abs(monto);
 
-    const nuevo = {
-      fecha,
-      tipo,
-      categoria,
-      categoriaAclaracion: categoriaAclaracion || undefined,
-      monto,
-      descripcion: descripcion || undefined
-    };
+    const nuevo = { fecha, tipo, categoria, categoriaAclaracion: categoriaAclaracion || undefined, monto, descripcion: descripcion || undefined };
 
-    if (editIndex !== null) {
-      // editar existente
-      movimientos[editIndex] = nuevo;
-      editIndex = null;
+    if (editId !== null) {
+      const idx = movimientos.findIndex(m => m.id === editId);
+      if (idx !== -1) {
+        movimientos[idx] = { ...nuevo, id: editId };
+      }
+      editId = null;
       if (btnCancelEdit) btnCancelEdit.style.display = "none";
       const submitBtn = document.getElementById("btn-submit");
       if (submitBtn) submitBtn.textContent = "Agregar";
     } else {
-      // agregar nuevo
-      movimientos.push({
-        id: Date.now(), // ✅ id único
-        descripcion,
-        monto,
-        fecha,
-        categoria,
-        categoriaAclaracion,
-        tipo
-      });
+      movimientos.push({ ...nuevo, id: Date.now() + Math.random() });
     }
 
-    // guardar y actualizar UI
     await guardarLocal()
       .then(() => {
         actualizarTabla();
@@ -240,10 +212,10 @@ if (lista) {
   lista.addEventListener("click", e => {
     const btn = e.target.closest("button");
     if (!btn) return;
-    const id = Number(btn.dataset.index);
+    const id = Number(btn.dataset.id);
+
     if (btn.classList.contains("editar")) {
-      // rellenar form para editar
-      const mov = movimientos[id];
+      const mov = movimientos.find(m => m.id === id);
       if (!mov) return alert("Movimiento no encontrado para editar");
 
       if (fechaInput) fechaInput.value = mov.fecha;
@@ -261,7 +233,7 @@ if (lista) {
       if (montoInput) montoInput.value = Math.abs(mov.monto);
       if (descripcionInput) descripcionInput.value = mov.descripcion || "";
 
-      editIndex = id;
+      editId = mov.id;
       if (btnCancelEdit) btnCancelEdit.style.display = "inline-block";
       const submitBtn = document.getElementById("btn-submit");
       if (submitBtn) submitBtn.textContent = "Guardar cambios";
@@ -275,7 +247,7 @@ if (lista) {
         modal.style.display = "flex";
       } else {
         if (confirm("¿Seguro que querés eliminar este movimiento?")) {
-          movimientos.splice(id, 1);
+          movimientos = movimientos.filter(m => m.id !== id);
           guardarLocal()
             .then(() => {
               actualizarTabla();
@@ -295,7 +267,7 @@ if (lista) {
 if (modal && modalConfirmBtn && modalCancelBtn) {
   modalConfirmBtn.addEventListener("click", async () => {
     if (typeof idAEliminar === "number") {
-      movimientos.splice(idAEliminar, 1);
+      movimientos = movimientos.filter(m => m.id !== idAEliminar);
       idAEliminar = null;
       await guardarLocal()
         .then(() => {
@@ -330,7 +302,7 @@ if (modal && modalConfirmBtn && modalCancelBtn) {
 ----------------------------*/
 if (btnCancelEdit) {
   btnCancelEdit.addEventListener("click", () => {
-    editIndex = null;
+    editId = null;
     if (form) form.reset();
     btnCancelEdit.style.display = "none";
     const submitBtn = document.getElementById("btn-submit");
@@ -346,7 +318,6 @@ const exportToExcel = () => {
   if (typeof XLSX === "undefined") {
     return alert("SheetJS (XLSX) no está cargado.");
   }
-  // Construyo una copia amigable para Excel
   const rows = movimientos.map(m => ({
     Fecha: m.fecha,
     Tipo: m.tipo,
@@ -359,7 +330,6 @@ const exportToExcel = () => {
   const ws = XLSX.utils.json_to_sheet(rows);
   XLSX.utils.book_append_sheet(wb, ws, "Movimientos");
 
-  // Totales en hoja separada
   const ingresos = movimientos.filter(m => String(m.tipo).toLowerCase() === "ingreso").reduce((a, c) => a + c.monto, 0);
   const gastos = movimientos.filter(m => String(m.tipo).toLowerCase() === "gasto").reduce((a, c) => a + Math.abs(c.monto), 0);
   const saldo = ingresos - gastos;
@@ -370,29 +340,16 @@ const exportToExcel = () => {
 };
 
 const exportToPDF = () => {
-  if (typeof jspdf === "undefined" && typeof window.jspdf === "undefined") {
-    // try direct global
-    if (typeof jsPDF === "undefined" && !(window && window.jspdf)) {
-      return alert("jsPDF o autoTable no cargados.");
-    }
-  }
-  // uso de la API de jsPDF (compatibilidad con loader)
   const { jsPDF } = window.jspdf || { jsPDF };
+  if (!jsPDF) return alert("jsPDF o autoTable no cargados.");
   const doc = new jsPDF();
   doc.text("Mis movimientos", 14, 15);
 
-  // construyo tabla simple
   const head = [["Fecha", "Tipo", "Categoria", "Descripción", "Monto"]];
-  const body = movimientos.map(m => [
-    m.fecha,
-    m.tipo,
-    m.categoria + (m.categoriaAclaracion ? ` (${m.categoriaAclaracion})` : ""),
-    m.descripcion || "",
-    m.monto
-  ]);
+  const body = movimientos.map(m => [m.fecha, m.tipo, m.categoria + (m.categoriaAclaracion ? ` (${m.categoriaAclaracion})` : ""), m.descripcion || "", m.monto]);
 
   doc.autoTable({ head, body, startY: 25 });
-  // totales
+
   const ingresos = movimientos.filter(m => String(m.tipo).toLowerCase() === "ingreso").reduce((a, c) => a + c.monto, 0);
   const gastos = movimientos.filter(m => String(m.tipo).toLowerCase() === "gasto").reduce((a, c) => a + Math.abs(c.monto), 0);
   const saldo = ingresos - gastos;
@@ -409,34 +366,27 @@ if (btnExportExcel) btnExportExcel.addEventListener("click", exportToExcel);
 if (btnExportPdf) btnExportPdf.addEventListener("click", exportToPDF);
 
 /* ---------------------------
-   GRÁFICOS (Chart.js) - inicializa/destruye correctamente
+   GRÁFICOS (Chart.js)
 ----------------------------*/
 let chartTorta = null;
 let chartBarras = null;
 
 const inicializarGraficos = () => {
-  // solo si Chart está cargado y estamos en la page de gráficos
   if (typeof Chart === "undefined") return;
 
-  // torta (Ingresos vs Gastos)
   const elTorta = document.getElementById("graficoTorta");
   if (elTorta) {
     if (chartTorta) chartTorta.destroy();
-
     const ingresos = movimientos.filter(m => String(m.tipo).toLowerCase() === "ingreso").reduce((a, c) => a + c.monto, 0);
     const gastos = movimientos.filter(m => String(m.tipo).toLowerCase() === "gasto").reduce((a, c) => a + Math.abs(c.monto), 0);
 
     chartTorta = new Chart(elTorta.getContext("2d"), {
       type: "doughnut",
-      data: {
-        labels: ["Ingresos", "Gastos"],
-        datasets: [{ data: [ingresos, gastos], backgroundColor: ["#28a745", "#dc3545"] }]
-      },
+      data: { labels: ["Ingresos", "Gastos"], datasets: [{ data: [ingresos, gastos], backgroundColor: ["#28a745", "#dc3545"] }] },
       options: { responsive: true, plugins: { legend: { position: "bottom" } } }
     });
   }
 
-  // barras por mes
   const elBarras = document.getElementById("graficoBarras");
   if (elBarras) {
     if (chartBarras) chartBarras.destroy();
@@ -445,7 +395,7 @@ const inicializarGraficos = () => {
     movimientos.forEach(m => {
       const d = new Date(m.fecha);
       if (isNaN(d)) return;
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; // YYYY-MM
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       if (!agrup[key]) agrup[key] = { ingresos: 0, gastos: 0 };
       if (String(m.tipo).toLowerCase() === "ingreso") agrup[key].ingresos += m.monto;
       else agrup[key].gastos += Math.abs(m.monto);
@@ -461,18 +411,11 @@ const inicializarGraficos = () => {
 
     chartBarras = new Chart(elBarras.getContext("2d"), {
       type: "bar",
-      data: {
-        labels, datasets: [
-          { label: "Ingresos", data: datosIngresos, backgroundColor: "#28a745" },
-          { label: "Gastos", data: datosGastos, backgroundColor: "#dc3545" }
-        ]
-      },
+      data: { labels, datasets: [{ label: "Ingresos", data: datosIngresos, backgroundColor: "#28a745" }, { label: "Gastos", data: datosGastos, backgroundColor: "#dc3545" }] },
       options: { responsive: true, plugins: { legend: { position: "top" } } }
     });
   }
 };
 
-/* 
-   Inicialización: cargar datos y prender la app
--*/
+/* Inicialización */
 cargarDatosIniciales();
